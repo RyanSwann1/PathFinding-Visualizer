@@ -18,6 +18,8 @@
 *.so
 *.dylib
 
+SFML/
+
 # Fortran module files
 *.mod
 *.smod

@@ -68,7 +68,7 @@ public:
 		m_heap.push_back(node);
 		assert(m_indexes.find(m_heap.back().position) == m_indexes.cend());
 		m_indexes.emplace(node.position, m_heap.size() - 1);
-		sortBottomNode();
+		sortNode(m_heap.size() - 1);
 	}
 
 	Node pop()
@@ -88,7 +88,7 @@ public:
 			auto iter = m_indexes.find(position);
 			if (iter != m_indexes.end())
 			{
-				int index = iter->second;
+				size_t index = iter->second;
 				assert(index < m_heap.size() && iter->first == m_heap[index].position);
 				swap(index, m_heap.size() - 1);
 
@@ -122,34 +122,17 @@ public:
 		m_indexes.clear();
 	}
 
-	
 private:
 	std::vector<Node> m_heap;
-	std::unordered_map<glm::ivec2, int> m_indexes;
+	std::unordered_map<glm::ivec2, size_t> m_indexes;
 	
-	void sortTopNode()
+	void sortNode(size_t i)
 	{
-		sortNode(0);
-	}
-
-	void sortBottomNode()
-	{
-		assert(!isEmpty());
-		int index = m_heap.size() - 1;
-		while (getParentIndex(index) >= 0 && m_heap[getParentIndex(index)].getCost() > m_heap[index].getCost())
-		{
-			swap(getParentIndex(index), index);
-			index = getParentIndex(index);
-		}
-	}
-
-	void sortNode(int i)
-	{
-		if (i < m_heap.size())
+		if (i < m_heap.size() - 1)
 		{
 			while (getLeftChildIndex(i) < m_heap.size())
 			{
-				int smallestChildIndex = getLeftChildIndex(i);
+				size_t smallestChildIndex = getLeftChildIndex(i);
 				if (getRightChildIndex(i) < m_heap.size() &&
 					m_heap[getRightChildIndex(i)].getCost() < m_heap[getLeftChildIndex(i)].getCost())
 				{
@@ -167,9 +150,21 @@ private:
 				}
 			}
 		}
+		else if (m_heap.size() >= 2 && i == m_heap.size() - 1)
+		{
+			size_t parentIndex = i;
+			while (getParentIndex(parentIndex))
+			{
+				if (m_heap[parentIndex].getCost() > m_heap[i].getCost())
+				{
+					swap(parentIndex, i);
+					i = parentIndex;
+				}
+			}
+		}
 	}
 
-	void swap(int index1, int index2)
+	void swap(size_t index1, size_t index2)
 	{
 		assert(index1 < m_heap.size() && index2 < m_heap.size());
 
@@ -183,17 +178,23 @@ private:
 		std::swap(m_heap[index2], m_heap[index1]);
 	}
 
-	int getParentIndex(int index) const
+	bool getParentIndex(size_t& index) const
 	{
-		return (index - 1) / 2;
+		if(index == 0)
+		{ 
+			return false;
+		}
+		
+		index = (index - 1) / 2;
+		return true;
 	}
 
-	int getLeftChildIndex(int index) const
+	size_t getLeftChildIndex(size_t index) const
 	{
 		return index * 2 + 1;
 	}
 
-	int getRightChildIndex(int index) const
+	size_t getRightChildIndex(size_t index) const
 	{
 		return index * 2 + 2;
 	}
