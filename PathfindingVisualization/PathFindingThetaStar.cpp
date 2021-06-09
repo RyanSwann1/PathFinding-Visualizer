@@ -123,8 +123,7 @@ void PathFindingThetaStar::update(std::vector<sf::RectangleShape>& map)
 					glm::ivec2 cameFrom(0, 0);
 					if (isInLineOfSight(map, adjacentPosition.position, currentNode.parent))
 					{
-						const ThetaStarGraphNode& currentPositionGraphNode = m_graph[Globals::convert2DTo1D(currentNode.parent)];
-						costFromStart = currentPositionGraphNode.g + getDistance(adjacentPosition.position, currentNode.parent);
+						costFromStart = m_graph[Globals::convert2DTo1D(currentNode.parent)].g + getDistance(adjacentPosition.position, currentNode.parent);
 						cameFrom = currentNode.parent;
 					}
 					else
@@ -140,38 +139,33 @@ void PathFindingThetaStar::update(std::vector<sf::RectangleShape>& map)
 				else
 				{
 					ThetaStarGraphNode& adjacentGraphNode = m_graph[Globals::convert2DTo1D(adjacentPosition.position)];
+					float costFromStart = 0.f;
+					glm::ivec2 cameFrom(0, 0);
+					float cameFromG = 0.f;
 					if (isInLineOfSight(map, adjacentPosition.position, currentNode.parent))
 					{
 						const ThetaStarGraphNode& parentGraphNode = m_graph[Globals::convert2DTo1D(currentNode.parent)];
-						float costFromStart = parentGraphNode.g + getDistance(adjacentPosition.position, parentGraphNode.position);
-						if (costFromStart < adjacentGraphNode.g)
-						{
-							adjacentGraphNode.g = costFromStart;
-							adjacentGraphNode.cameFrom = parentGraphNode.position;
-
-							if (m_frontier.findAndErase(adjacentPosition.position))
-							{
-								m_frontier.add({ adjacentPosition.position,
-								parentGraphNode.position,
-								currentNode.g + getDistance(adjacentPosition.position, currentNode.position),
-								getDistance(adjacentPosition.position, m_endPosition) });
-							}
-						}
+						costFromStart = parentGraphNode.g + getDistance(adjacentPosition.position, parentGraphNode.position);
+						cameFrom = parentGraphNode.position;
+						cameFromG = parentGraphNode.g;
 					}
 					else
 					{
-						float costFromStart = currentNode.g + getDistance(adjacentPosition.position, currentNode.position);
-						if (costFromStart < m_graph[Globals::convert2DTo1D(adjacentPosition.position)].g)
+						costFromStart = currentNode.g + getDistance(adjacentPosition.position, currentNode.position);
+						cameFrom = currentNode.position;
+						cameFromG = currentNode.g;
+					}
+
+					if (costFromStart < m_graph[Globals::convert2DTo1D(adjacentPosition.position)].g)
+					{
+						adjacentGraphNode.g = costFromStart;
+						adjacentGraphNode.cameFrom = currentNode.position;
+						if (m_frontier.findAndErase(adjacentPosition.position))
 						{
-							adjacentGraphNode.g = costFromStart;
-							adjacentGraphNode.cameFrom = currentNode.position;
-							if (m_frontier.findAndErase(adjacentPosition.position))
-							{
-								m_frontier.add({ adjacentPosition.position,
-								currentNode.position,
-								currentNode.g + getDistance(adjacentPosition.position, currentNode.position),
-								getDistance(adjacentPosition.position, m_endPosition) });
-							}
+							m_frontier.add({ adjacentPosition.position,
+							cameFrom,
+							cameFromG + getDistance(adjacentPosition.position, cameFrom),
+							adjacentGraphNode.h});
 						}
 					}
 				}
